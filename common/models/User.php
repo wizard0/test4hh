@@ -14,12 +14,12 @@ use yii\web\IdentityInterface;
  * @property string $username
  * @property string $password_hash
  * @property string $password_reset_token
- * @property string $email
  * @property string $auth_key
  * @property integer $status
  * @property integer $created_at
  * @property integer $updated_at
  * @property string $password write-only password
+ * @property integer $role
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -28,6 +28,8 @@ class User extends ActiveRecord implements IdentityInterface
 
     const ROLE_USER = 10;
     const ROLE_ADMIN = 20;
+
+    public $password = "";
 
     /**
      * {@inheritdoc}
@@ -53,6 +55,7 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
+            [['username', 'password'], 'required'],
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED]],
             ['role', 'default', 'value' => 10],
@@ -205,5 +208,21 @@ class User extends ActiveRecord implements IdentityInterface
         } else {
             return false;
         }
+    }
+
+    /**
+     * Setting password if needed
+     *
+     * @param bool $insert
+     *
+     * @return bool
+     */
+    public function beforeSave($insert) {
+        if ($this->password) {
+            $this->setPassword($this->password);
+        }
+        $this->generateAuthKey();
+
+        return parent::beforeSave($insert);
     }
 }
